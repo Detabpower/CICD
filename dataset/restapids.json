@@ -2,7 +2,7 @@
 	"name": "restapids",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureDataLakeStorage2",
+			"referenceName": "RestAPIDatalakeLinkedService",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
