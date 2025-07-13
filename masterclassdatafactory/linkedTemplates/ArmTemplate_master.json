@@ -1,0 +1,316 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "masterclassdatafactory"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureDataLakeStorage2_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage2'"
+		},
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
+		},
+		"AzureDatabricks2_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks2'"
+		},
+		"AzureDatabricksDeltaLake1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricksDeltaLake1'"
+		},
+		"MySqlDataset_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'MySqlDataset'"
+		},
+		"MySqlLinkedservice_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'MySqlLinkedservice'"
+		},
+		"RestAPIDatalakeLinkedService_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'RestAPIDatalakeLinkedService'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakemclassstorage.dfs.core.windows.net/"
+		},
+		"AzureDataLakeStorage2_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakemclassstorage.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0512-105338-2dyyf0yr"
+		},
+		"AzureDatabricks2_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0512-105338-2dyyf0yr"
+		},
+		"HttpServer2_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://raw.githubusercontent.com/"
+		},
+		"MySqlDataset_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "nysqlmasterclass.mysql.database.azure.com"
+		},
+		"MySqlDataset_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "mysqltest"
+		},
+		"MySqlDataset_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "mysqladmin"
+		},
+		"MySqlLinkedservice_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "127.0.0.1"
+		},
+		"MySqlLinkedservice_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sql_store"
+		},
+		"MySqlLinkedservice_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "root"
+		},
+		"RestAPIDatalakeLinkedService_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakemclassstorage.dfs.core.windows.net/"
+		},
+		"RestAPILinkedService_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://openlibrary.org"
+		},
+		"RegionDataTrigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/b7487098-60b9-497f-93d1-e076b4cd8df7/resourceGroups/RG_Databricks_Masterclass/providers/Microsoft.Storage/storageAccounts/datalakemclassstorage"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "masterclassdatafactory_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"AzureDataLakeStorage1_accountKey": {
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					},
+					"AzureDataLakeStorage2_accountKey": {
+						"value": "[parameters('AzureDataLakeStorage2_accountKey')]"
+					},
+					"AzureDatabricks1_accessToken": {
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"AzureDatabricks2_accessToken": {
+						"value": "[parameters('AzureDatabricks2_accessToken')]"
+					},
+					"AzureDatabricksDeltaLake1_accessToken": {
+						"value": "[parameters('AzureDatabricksDeltaLake1_accessToken')]"
+					},
+					"MySqlDataset_password": {
+						"value": "[parameters('MySqlDataset_password')]"
+					},
+					"RestAPIDatalakeLinkedService_accountKey": {
+						"value": "[parameters('RestAPIDatalakeLinkedService_accountKey')]"
+					},
+					"AzureDataLakeStorage1_properties_typeProperties_url": {
+						"value": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]"
+					},
+					"AzureDataLakeStorage2_properties_typeProperties_url": {
+						"value": "[parameters('AzureDataLakeStorage2_properties_typeProperties_url')]"
+					},
+					"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('AzureDatabricks1_properties_typeProperties_existingClusterId')]"
+					},
+					"AzureDatabricks2_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('AzureDatabricks2_properties_typeProperties_existingClusterId')]"
+					},
+					"HttpServer2_properties_typeProperties_url": {
+						"value": "[parameters('HttpServer2_properties_typeProperties_url')]"
+					},
+					"MySqlDataset_properties_typeProperties_server": {
+						"value": "[parameters('MySqlDataset_properties_typeProperties_server')]"
+					},
+					"MySqlDataset_properties_typeProperties_database": {
+						"value": "[parameters('MySqlDataset_properties_typeProperties_database')]"
+					},
+					"MySqlDataset_properties_typeProperties_username": {
+						"value": "[parameters('MySqlDataset_properties_typeProperties_username')]"
+					},
+					"RestAPIDatalakeLinkedService_properties_typeProperties_url": {
+						"value": "[parameters('RestAPIDatalakeLinkedService_properties_typeProperties_url')]"
+					},
+					"RestAPILinkedService_properties_typeProperties_url": {
+						"value": "[parameters('RestAPILinkedService_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_1')]"
+			]
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"MySqlLinkedservice_password": {
+						"value": "[parameters('MySqlLinkedservice_password')]"
+					},
+					"MySqlLinkedservice_properties_typeProperties_server": {
+						"value": "[parameters('MySqlLinkedservice_properties_typeProperties_server')]"
+					},
+					"MySqlLinkedservice_properties_typeProperties_database": {
+						"value": "[parameters('MySqlLinkedservice_properties_typeProperties_database')]"
+					},
+					"MySqlLinkedservice_properties_typeProperties_username": {
+						"value": "[parameters('MySqlLinkedservice_properties_typeProperties_username')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_2')]"
+			]
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_4",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_4.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_3')]"
+			]
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_5",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_5.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_4')]"
+			]
+		},
+		{
+			"name": "masterclassdatafactory_ArmTemplate_6",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_6.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"RegionDataTrigger_properties_typeProperties_scope": {
+						"value": "[parameters('RegionDataTrigger_properties_typeProperties_scope')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'masterclassdatafactory_ArmTemplate_5')]"
+			]
+		}
+	]
+}

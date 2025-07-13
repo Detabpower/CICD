@@ -1,0 +1,1507 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "masterclassdatafactory"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/StoreFilenameAndSizepipeline2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "GetFileNmaeDS",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "JsonReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata1').output.childItems",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Append variable1",
+									"type": "AppendVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "fileName",
+										"value": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "SetNumberOffilesvariable",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "ForEach1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "numberoffiles",
+							"value": {
+								"value": "@length(variables('fileName'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "SetFileNamesvariable",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "ForEach1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "filenames",
+							"value": {
+								"value": "@string(variables('fileName'))",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"fileName": {
+						"type": "Array"
+					},
+					"numberoffiles": {
+						"type": "Integer"
+					},
+					"filenames": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-25T21:24:03Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Validation Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Bronze Dataset Validation",
+						"type": "Validation",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DelimitedText1",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_subfolder": {
+										"value": "@pipeline().parameters.foldername",
+										"type": "Expression"
+									},
+									"p_filename": {
+										"value": "@pipeline().parameters.filename",
+										"type": "Expression"
+									}
+								}
+							},
+							"timeout": "0.12:00:00",
+							"sleep": 10
+						}
+					},
+					{
+						"name": "Success variable",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Bronze Dataset Validation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "success",
+							"value": {
+								"value": "@activity('Bronze Dataset Validation').output.value",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Failure variable",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Bronze Dataset Validation",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "pipelineReturnValue",
+							"value": [
+								{
+									"key": "message",
+									"value": {
+										"type": "String",
+										"content": ""
+									}
+								}
+							],
+							"setSystemVariable": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"foldername": {
+						"type": "string"
+					},
+					"filename": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"success": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "Interview Questions"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-07-12T15:40:51Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup1",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "Json1",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "Json Notebook",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Lookup1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Databricks_MasterClass/Json",
+							"baseParameters": {
+								"DataFactoryName": {
+									"value": "@pipeline().DataFactory",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Data Cleanup Notebook",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Lookup1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Databricks_MasterClass/DataCleanup",
+							"baseParameters": {
+								"workspace Name": {
+									"value": "@pipeline().DataFactory",
+									"type": "Expression"
+								},
+								"Pipeline": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks2",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-17T12:55:24Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MySqlTable1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MySqlLinkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "MySqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MySqlTable2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "MySqlLinkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_tablename": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "MySqlTable",
+				"schema": [],
+				"typeProperties": {
+					"tableName": {
+						"value": "@dataset().p_tablename",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Broadcast dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "employeedataset",
+								"type": "DatasetReference"
+							},
+							"name": "deptsource"
+						},
+						{
+							"dataset": {
+								"referenceName": "employeedataset",
+								"type": "DatasetReference"
+							},
+							"name": "empsource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sinkdatsaset",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          {id     name          salary} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> deptsource",
+						"source(output(",
+						"          {id     name          salary} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> empsource",
+						"deptsource, empsource join(deptsource@{id     name          salary} == empsource@{id     name          salary},",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          {id     name          salary} = deptsource@{id     name          salary},",
+						"          {id     name          salary} = empsource@{id     name          salary}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSVtoJsondataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "CSVToJsonDS",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "select1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          {SOid,SODate,Country,Item,Qty,Value} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 derive(SODate = split({SOid,SODate,Country,Item,Qty,Value}, ',')[2],",
+						"          Country = split({SOid,SODate,Country,Item,Qty,Value}, ',')[3],",
+						"          Sales = @(Item=split({SOid,SODate,Country,Item,Qty,Value}, ',')[4],",
+						"          Qty=split({SOid,SODate,Country,Item,Qty,Value}, ',')[5],",
+						"          Value=split({SOid,SODate,Country,Item,Qty,Value}, ',')[6]),",
+						"          SOId = split({SOid,SODate,Country,Item,Qty,Value}, ',')[1]) ~> derivedColumn1",
+						"select1 aggregate(groupBy(SOId,",
+						"          SODate,",
+						"          Country),",
+						"     Sales = collect(Sales)) ~> aggregate1",
+						"derivedColumn1 select(mapColumn(",
+						"          SODate,",
+						"          Country,",
+						"          Sales,",
+						"          SOId",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"aggregate1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Sales.json'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DynamicJsonDataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "parmeterJson",
+								"type": "DatasetReference"
+							},
+							"name": "DynamicJson"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DestinationFolderDS",
+								"type": "DatasetReference"
+							},
+							"name": "DynamicJsonOutput"
+						}
+					],
+					"transformations": [
+						{
+							"name": "flattendynamicjson"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          labs as (location as string, name as string, time as string)[],",
+						"          medications as (aceInhibitors as (dose as string, name as string, pillCount as string, refills as string, route as string, sig as string, strength as string), antianginal as (dose as string, name as string, pillCount as string, refills as string, route as string, sig as string, strength as string), anticoagulants as (dose as string, name as string, pillCount as string, refills as string, route as string, sig as string, strength as string))",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'arrayOfDocuments') ~> DynamicJson",
+						"DynamicJson foldDown(unroll(labs, labs),",
+						"     mapColumn(",
+						"          labs,",
+						"          medications",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattendynamicjson",
+						"flattendynamicjson sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['example.json'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> DynamicJsonOutput"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FixedLengthCSVdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "select1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          {id     name          salary} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 derive(id = substring({id     name          salary}, 1, 5),",
+						"          name = substring({id     name          salary}, 6, 16),",
+						"          salary = substring({id     name          salary}, 17, 27)) ~> derivedColumn1",
+						"derivedColumn1 select(mapColumn(",
+						"          id,",
+						"          name,",
+						"          salary",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['employee.txt'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Jsondataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "JsonDataset",
+								"type": "DatasetReference"
+							},
+							"name": "Jsonsource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "JsonToCsvDatatset",
+								"type": "DatasetReference"
+							},
+							"name": "jsonsink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "flattenjson"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          address as (country as string, state as string),",
+						"          children as (age as short, familyname as string, gender as string, givenname as string, pets as (givenname as string)[])[],",
+						"          creattiondate as integer,",
+						"          id as string,",
+						"          isRegistered as boolean,",
+						"          parents as (familyname as string, givenname as string)[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'arrayOfDocuments') ~> Jsonsource",
+						"Jsonsource foldDown(unrollMultiple(parents,children,children.pets),",
+						"     mapColumn(",
+						"          parents_givename = parents.givenname,",
+						"          parents_familyname = parents.familyname,",
+						"          children_givenname = children.givenname,",
+						"          children_familname = children.familyname,",
+						"          children_age = children.age,",
+						"          childrenpetsname = children.pets.givenname,",
+						"          country = address.country,",
+						"          state = address.state",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenjson",
+						"flattenjson sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['family.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> jsonsink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/MultipleRowsToSinglRowdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "Scootersource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "MultipleRowToSinglerowsink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregateItemIDItemName"
+						},
+						{
+							"name": "derivedColumnVariantName"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          ItemID as short,",
+						"          VarIiantD as short,",
+						"          ItemName as string,",
+						"          VarName as string,",
+						"          Whno as string,",
+						"          Zone as string,",
+						"          Bin as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Scootersource",
+						"Scootersource aggregate(groupBy(ItemID,",
+						"          ItemName),",
+						"     VarName = collect(VarName)) ~> aggregateItemIDItemName",
+						"aggregateItemIDItemName derive(VariantName = replace(replace(replace(replace(toString(VarName), '\"', ''),'[', ''), ']', ''), ',', '|')) ~> derivedColumnVariantName",
+						"derivedColumnVariantName sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Scooter_Report.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> MultipleRowToSinglerowsink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RegionDatadataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "BronzeDS",
+								"type": "DatasetReference"
+							},
+							"name": "BronzeData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sinkDataset",
+								"type": "DatasetReference"
+							},
+							"name": "silver"
+						}
+					],
+					"transformations": [
+						{
+							"name": "Region"
+						},
+						{
+							"name": "UDFderivedColumn"
+						}
+					],
+					"udfLibraries": [
+						{
+							"referenceName": "myfunctions",
+							"type": "DataFlowReference"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     region as string",
+						"}",
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> BronzeData",
+						"BronzeData derive(region = $region) ~> Region",
+						"Region derive(region = toupper(region),",
+						"          each(match(type=='string'), $$+'upper' = toupper($$))) ~> UDFderivedColumn",
+						"UDFderivedColumn sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> silver"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SingleRowToMultipleRowdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "SingleRowsource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumnArray"
+						},
+						{
+							"name": "flattenarray"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          ItemID as short,",
+						"          ItemName as string,",
+						"          VarName as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> SingleRowsource",
+						"SingleRowsource derive(VarName = split(VarName, ',')) ~> derivedColumnArray",
+						"derivedColumnArray foldDown(unroll(VarName, VarName),",
+						"     mapColumn(",
+						"          ItemID,",
+						"          ItemName,",
+						"          VarName",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenarray",
+						"flattenarray sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Scooter_New.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Transformationdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DestinationDataset",
+								"type": "DatasetReference"
+							},
+							"name": "SouthAmerica"
+						},
+						{
+							"dataset": {
+								"referenceName": "MorthAmericaDS",
+								"type": "DatasetReference"
+							},
+							"name": "NorthAmericaStream"
+						},
+						{
+							"dataset": {
+								"referenceName": "EuropeDS",
+								"type": "DatasetReference"
+							},
+							"name": "Europe"
+						},
+						{
+							"dataset": {
+								"referenceName": "AsiaDS",
+								"type": "DatasetReference"
+							},
+							"name": "Asia"
+						},
+						{
+							"dataset": {
+								"referenceName": "AfricaDS",
+								"type": "DatasetReference"
+							},
+							"name": "Africa"
+						},
+						{
+							"dataset": {
+								"referenceName": "Oceania",
+								"type": "DatasetReference"
+							},
+							"name": "Oceania"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "CombinedRegionDS",
+								"type": "DatasetReference"
+							},
+							"name": "Transformationsink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RegionalDataUnion"
+						},
+						{
+							"name": "RestaurantName"
+						},
+						{
+							"name": "RestaurantAddress"
+						},
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"udfLibraries": [
+						{
+							"referenceName": "myfunctions",
+							"type": "DataFlowReference"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     limit: 100,",
+						"     ignoreNoFilesFound: false) ~> SouthAmerica",
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> NorthAmericaStream",
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Europe",
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Asia",
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Africa",
+						"source(output(",
+						"          {Restaurant ID} as integer,",
+						"          {Country Code} as short,",
+						"          City as string,",
+						"          {Restaurant Name & Address} as string,",
+						"          Locality as string,",
+						"          {Locality Verbose} as string,",
+						"          Longitude as double,",
+						"          Latitude as double,",
+						"          Cuisines as string,",
+						"          Region as string,",
+						"          LoadDate as date,",
+						"          LoadTIme as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Oceania",
+						"SouthAmerica, NorthAmericaStream, Europe, Asia, Africa, Oceania union(byName: true)~> RegionalDataUnion",
+						"RegionalDataUnion derive(RestaurantName = split({Restaurant Name & Address}, ',')[1]) ~> RestaurantName",
+						"RestaurantName derive(RestaurantAddress = substring({Restaurant Name & Address}, length(RestaurantName) + 2, length({Restaurant Name & Address}))) ~> RestaurantAddress",
+						"NorthAmericaStream derive(cuisine = toupper(Cuisines)) ~> derivedColumn1",
+						"RestaurantAddress sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['RegionData.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Transformationsink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Watermarkingdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sourcedatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "destinationdatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "Ordersink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "alterRow1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          orderid as short,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          Inserttime as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 select(mapColumn(",
+						"          orderid,",
+						"          FirstName,",
+						"          LastName,",
+						"          Inserttime",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 alterRow(upsertIf(orderid<=3)) ~> alterRow1",
+						"alterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['OrdersFinal.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          orderid,",
+						"          FirstName,",
+						"          LastName,",
+						"          Inserttime",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Ordersink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ExcelTillFileNameDS",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "destinationdatafolderds",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "sort1"
+						},
+						{
+							"name": "aggregate1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Empid as short,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EnrolDt as date,",
+						"          Salary as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 sort(asc(Empid, true),",
+						"     desc(EnrolDt, true)) ~> sort1",
+						"sort1 aggregate(groupBy(Empid),",
+						"     each(match(name!=\"Empid\"), $$ = first($$))) ~> aggregate1",
+						"aggregate1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['CleanEmp.csv'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/inlinedatasetdataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "employeedataset",
+								"type": "DatasetReference"
+							},
+							"name": "emp"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "empdataset",
+								"type": "DatasetReference"
+							},
+							"name": "destinationempsink"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          {id     name          salary} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     fileSystem: 'source',",
+						"     folderPath: 'data',",
+						"     fileName: 'Emp_India_May27.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> emp",
+						"emp sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> destinationempsink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSVToNestedJsonpipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CSV To JSON Data flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "CSVtoJsondataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {
+										"p_folder": "data",
+										"p_container": "source",
+										"p_filename": "Sales.csv"
+									},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Interview Questions"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-30T17:28:55Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/CSVtoJsondataflow')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FixedLengthCSVpipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Fixed Length CSV Data flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "FixedLengthCSVdataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {
+										"p_folder": "data",
+										"p_container": "source",
+										"p_filename": "employee.txt"
+									},
+									"sink1": {
+										"p_folder": "data",
+										"p_container": "destination",
+										"p_filename": "employee.txt"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Interview Questions"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-30T17:28:55Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/FixedLengthCSVdataflow')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FormatJsonpipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Format Json Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Jsondataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Jsonsource": {},
+									"jsonsink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Interview Questions"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-05-28T12:45:25Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/Jsondataflow')]"
+			]
+		}
+	]
+}
