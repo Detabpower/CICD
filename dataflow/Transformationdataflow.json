@@ -187,11 +187,12 @@
 				"RestaurantAddress sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:['RegionData.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1),",
-				"     preCommands: [],",
-				"     postCommands: []) ~> Transformationsink"
+				"     partitionBy('hash', 1)) ~> Transformationsink"
 			]
 		}
 	}
