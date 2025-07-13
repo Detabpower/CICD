@@ -19,6 +19,11 @@
 						"referenceName": "MultipleRowsToSinglRowdataflow",
 						"type": "DataFlowReference",
 						"datasetParameters": {
+							"Scootersource": {
+								"p_folder": "source",
+								"p_container": "data",
+								"p_filename": "emp.csv"
+							},
 							"MultipleRowToSinglerowsink": {
 								"p_folder": "data",
 								"p_container": "destination",
