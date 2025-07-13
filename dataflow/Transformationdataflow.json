@@ -65,6 +65,15 @@
 				},
 				{
 					"name": "RestaurantAddress"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"udfLibraries": [
+				{
+					"referenceName": "myfunctions",
+					"type": "DataFlowReference"
 				}
 			],
 			"scriptLines": [
@@ -174,15 +183,15 @@
 				"SouthAmerica, NorthAmericaStream, Europe, Asia, Africa, Oceania union(byName: true)~> RegionalDataUnion",
 				"RegionalDataUnion derive(RestaurantName = split({Restaurant Name & Address}, ',')[1]) ~> RestaurantName",
 				"RestaurantName derive(RestaurantAddress = substring({Restaurant Name & Address}, length(RestaurantName) + 2, length({Restaurant Name & Address}))) ~> RestaurantAddress",
+				"NorthAmericaStream derive(cuisine = toupper(Cuisines)) ~> derivedColumn1",
 				"RestaurantAddress sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     partitionFileNames:['RegionData.csv'],",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> Transformationsink"
+				"     partitionBy('hash', 1),",
+				"     preCommands: [],",
+				"     postCommands: []) ~> Transformationsink"
 			]
 		}
 	}
