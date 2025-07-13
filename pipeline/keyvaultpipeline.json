@@ -1,0 +1,73 @@
+{
+	"name": "keyvaultpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "KeyvaultWeb",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "https://@{pipeline().parameters.p_keyvaultname}.vault.azure.net/secrets/@{pipeline().parameters.p_secretinfo}?api-version=7.4\n\n",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "KeyvaultWeb",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "varsecret",
+					"value": {
+						"value": "@activity('KeyvaultWeb').output.value",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_keyvaultname": {
+				"type": "string",
+				"defaultValue": "adfinterviewkeyvault"
+			},
+			"p_secretinfo": {
+				"type": "string",
+				"defaultValue": "adfinterview/59bfc9bfcbb6422689ace2b0759a6d12"
+			}
+		},
+		"variables": {
+			"varsecret": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-28T17:54:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

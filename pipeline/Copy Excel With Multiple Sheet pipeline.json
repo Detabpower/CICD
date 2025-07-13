@@ -1,0 +1,232 @@
+{
+	"name": "Copy Excel With Multiple Sheet pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Config Lookup",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": "parameter",
+							"p_container": "source",
+							"p_filename": "Employeeconfig.csv"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEachLookupValue",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Config Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Config Lookup').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "If FileName Condition",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@contains(item().SheetName, 'Emp')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Copy Dept data",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "ExcelSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings",
+													"copyBehavior": "MergeFiles"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "ExcelTillFileNameDS",
+												"type": "DatasetReference",
+												"parameters": {
+													"pcontainer": "source",
+													"pdir": "ExcelData",
+													"pfilename": "EmpoyeeWithSheet.xlsx",
+													"p_sheetname": {
+														"value": "@item().SheetName",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "destinationdatafolderds",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_container": "destination",
+													"p_directory": "ExcelData",
+													"p_filename": {
+														"value": "@concat(concat('Dept', item().SheetName), '.csv')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Copy Excel data",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "ExcelSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings",
+													"copyBehavior": "MergeFiles"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "ExcelTillFileNameDS",
+												"type": "DatasetReference",
+												"parameters": {
+													"pcontainer": "source",
+													"pdir": "ExcelData",
+													"pfilename": "EmpoyeeWithSheet.xlsx",
+													"p_sheetname": {
+														"value": "@item().SheetName",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "destinationdatafolderds",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_container": "destination",
+													"p_directory": "ExcelData",
+													"p_filename": {
+														"value": "@concat(concat('Employee',item().SheetName),'.csv')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-31T09:23:13Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

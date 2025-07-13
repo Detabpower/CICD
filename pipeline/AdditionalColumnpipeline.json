@@ -1,0 +1,97 @@
+{
+	"name": "AdditionalColumnpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "insertiondate",
+								"value": {
+									"value": "@formatDateTime(convertTimeZone(utcNow(),'UTC','India Standard Time'), 'yyyy-dd-MMM')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "insertiontime",
+								"value": {
+									"value": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'India Standard Time'), 'HH:mm:ss')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": "data",
+							"p_container": "source",
+							"p_filename": "dept.csv"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "destinationdatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_container": "destination",
+							"p_directory": "data",
+							"p_filename": "dept.csv"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-30T12:18:39Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

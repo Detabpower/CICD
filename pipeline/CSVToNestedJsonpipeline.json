@@ -1,0 +1,44 @@
+{
+	"name": "CSVToNestedJsonpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "CSV To JSON Data flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "CSVtoJsondataflow",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"source1": {
+								"p_folder": "data",
+								"p_container": "source",
+								"p_filename": "Sales.csv"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-30T17:28:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

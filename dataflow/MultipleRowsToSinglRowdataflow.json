@@ -1,0 +1,61 @@
+{
+	"name": "MultipleRowsToSinglRowdataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "Scootersource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "MultipleRowToSinglerowsink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "aggregateItemIDItemName"
+				},
+				{
+					"name": "derivedColumnVariantName"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ItemID as short,",
+				"          VarIiantD as short,",
+				"          ItemName as string,",
+				"          VarName as string,",
+				"          Whno as string,",
+				"          Zone as string,",
+				"          Bin as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Scootersource",
+				"Scootersource aggregate(groupBy(ItemID,",
+				"          ItemName),",
+				"     VarName = collect(VarName)) ~> aggregateItemIDItemName",
+				"aggregateItemIDItemName derive(VariantName = replace(replace(replace(replace(toString(VarName), '\"', ''),'[', ''), ']', ''), ',', '|')) ~> derivedColumnVariantName",
+				"derivedColumnVariantName sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['Scooter_Report.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> MultipleRowToSinglerowsink"
+			]
+		}
+	}
+}

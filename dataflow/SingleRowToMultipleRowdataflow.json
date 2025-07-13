@@ -1,0 +1,62 @@
+{
+	"name": "SingleRowToMultipleRowdataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "SingleRowsource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumnArray"
+				},
+				{
+					"name": "flattenarray"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ItemID as short,",
+				"          ItemName as string,",
+				"          VarName as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SingleRowsource",
+				"SingleRowsource derive(VarName = split(VarName, ',')) ~> derivedColumnArray",
+				"derivedColumnArray foldDown(unroll(VarName, VarName),",
+				"     mapColumn(",
+				"          ItemID,",
+				"          ItemName,",
+				"          VarName",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenarray",
+				"flattenarray sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['Scooter_New.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1"
+			]
+		}
+	}
+}

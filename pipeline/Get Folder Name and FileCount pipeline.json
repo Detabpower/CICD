@@ -1,0 +1,265 @@
+{
+	"name": "Get Folder Name and FileCount pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Source Metadata",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "SourceContainerds",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachSourceData",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Source Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Source Metadata').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "If Item Type Condition",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(item().type, 'Folder' )",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "Get Metadata Of Folder",
+										"type": "GetMetadata",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataset": {
+												"referenceName": "SourceDatafolder_ds",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_container": "source",
+													"p_directory": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											},
+											"fieldList": [
+												"itemName",
+												"childItems"
+											],
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										}
+									},
+									{
+										"name": "Filter1",
+										"type": "Filter",
+										"dependsOn": [
+											{
+												"activity": "Get Metadata Of Folder",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"items": {
+												"value": "@activity('Get Metadata Of Folder').output.childItems",
+												"type": "Expression"
+											},
+											"condition": {
+												"value": "@equals(1,1)",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "Append variable1",
+										"type": "AppendVariable",
+										"dependsOn": [
+											{
+												"activity": "Filter1",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "folder name",
+											"value": {
+												"value": "@item().name",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "Append Filecount variable",
+										"type": "AppendVariable",
+										"dependsOn": [
+											{
+												"activity": "Filter1",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "filecount",
+											"value": {
+												"value": "@activity('Filter1').output.ItemsCount",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "Copy data",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "Append variable1",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											},
+											{
+												"activity": "Append Filecount variable",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "JsonSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "JsonWriteSettings"
+												}
+											},
+											"enableStaging": false
+										},
+										"inputs": [
+											{
+												"referenceName": "sourcedatafolderds",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_folder": {
+														"value": "@item().name",
+														"type": "Expression"
+													},
+													"p_container": "source",
+													"p_filename": {
+														"value": "@activity('Filter1').output.Value",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DynamicFolderDS",
+												"type": "DatasetReference",
+												"parameters": {
+													"folder": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"folder name": {
+				"type": "Array"
+			},
+			"filecount": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-31T19:07:18Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

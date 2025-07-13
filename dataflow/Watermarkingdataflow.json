@@ -1,0 +1,69 @@
+{
+	"name": "Watermarkingdataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "destinationdatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "Ordersink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "alterRow1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          orderid as short,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          Inserttime as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 select(mapColumn(",
+				"          orderid,",
+				"          FirstName,",
+				"          LastName,",
+				"          Inserttime",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 alterRow(upsertIf(orderid<=3)) ~> alterRow1",
+				"alterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['OrdersFinal.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          orderid,",
+				"          FirstName,",
+				"          LastName,",
+				"          Inserttime",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> Ordersink"
+			]
+		}
+	}
+}

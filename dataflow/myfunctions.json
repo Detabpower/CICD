@@ -1,0 +1,15 @@
+{
+	"name": "myfunctions",
+	"properties": {
+		"type": "UDFLibrary",
+		"typeProperties": {
+			"sources": [],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"toupper(string) as string = coalesce(upper(trim(i1)),'default'),",
+				"defaultint(integer) as double = coalesce(i1,cos(50))"
+			]
+		}
+	}
+}

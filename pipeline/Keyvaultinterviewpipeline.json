@@ -1,0 +1,37 @@
+{
+	"name": "Keyvaultinterviewpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "KeyvaultWeb",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "https://masterclasskivault.vault.azure.net/secrets/adfsecret/338fa5d266f349079ad983e9184eb0bd?api-version=7.4",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net/"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-28T18:09:22Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

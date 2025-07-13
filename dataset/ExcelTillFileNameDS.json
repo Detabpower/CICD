@@ -1,0 +1,49 @@
+{
+	"name": "ExcelTillFileNameDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage2",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"pcontainer": {
+				"type": "String"
+			},
+			"pdir": {
+				"type": "String"
+			},
+			"pfilename": {
+				"type": "String"
+			},
+			"p_sheetname": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Excel",
+		"typeProperties": {
+			"sheetName": {
+				"value": "@dataset().p_sheetname",
+				"type": "Expression"
+			},
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().pfilename",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().pdir",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().pcontainer",
+					"type": "Expression"
+				}
+			},
+			"firstRowAsHeader": true
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

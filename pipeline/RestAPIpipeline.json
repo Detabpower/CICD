@@ -1,0 +1,407 @@
+{
+	"name": "RestAPIpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Reponse",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": "https://openlibrary.org/api/books?bibkeys=ISBN:0201558025,LCCN:93005405&format=json"
+				}
+			},
+			{
+				"name": "Copy Rest API data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Get Reponse",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['ISBN:0201558025']['bib_key']"
+								},
+								"sink": {
+									"path": "$['ISBN:0201558025']['bib_key']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ISBN:0201558025']['info_url']"
+								},
+								"sink": {
+									"path": "$['ISBN:0201558025']['info_url']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ISBN:0201558025']['preview']"
+								},
+								"sink": {
+									"path": "$['ISBN:0201558025']['preview']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ISBN:0201558025']['preview_url']"
+								},
+								"sink": {
+									"path": "$['ISBN:0201558025']['preview_url']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ISBN:0201558025']['thumbnail_url']"
+								},
+								"sink": {
+									"path": "$['ISBN:0201558025']['thumbnail_url']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['LCCN:93005405']['bib_key']"
+								},
+								"sink": {
+									"path": "$['LCCN:93005405']['bib_key']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['LCCN:93005405']['info_url']"
+								},
+								"sink": {
+									"path": "$['LCCN:93005405']['info_url']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['LCCN:93005405']['preview']"
+								},
+								"sink": {
+									"path": "$['LCCN:93005405']['preview']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['LCCN:93005405']['preview_url']"
+								},
+								"sink": {
+									"path": "$['LCCN:93005405']['preview_url']"
+								}
+							},
+							{
+								"source": {
+									"path": "$['LCCN:93005405']['thumbnail_url']"
+								},
+								"sink": {
+									"path": "$['LCCN:93005405']['thumbnail_url']"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "RestAPIDataset",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "RestAPIJsonDataset",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy HTTP Data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Copy Rest API data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "OrderID",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "OrderID",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "OrderDate",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "OrderDate",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "CustomerID",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CustomerID",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "CustomerName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CustomerName",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "CustomerEmail",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "CustomerEmail",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductID",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductID",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductName",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "RegionID",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RegionID",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "RegionName",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "RegionName",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Country",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Country",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Quantity",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "Quantity",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "UnitPrice",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "UnitPrice",
+									"type": "String",
+									"physicalType": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "TotalAmount",
+									"type": "String",
+									"physicalType": "String"
+								},
+								"sink": {
+									"name": "TotalAmount",
+									"type": "String",
+									"physicalType": "String"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "HTTPcsvGitHubDataset",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": "data",
+							"p_container": "source",
+							"p_filename": "ordersdata.csv"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-28T09:10:27Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,67 @@
+{
+	"name": "Jsondataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "JsonDataset",
+						"type": "DatasetReference"
+					},
+					"name": "Jsonsource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "JsonToCsvDatatset",
+						"type": "DatasetReference"
+					},
+					"name": "jsonsink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flattenjson"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          address as (country as string, state as string),",
+				"          children as (age as short, familyname as string, gender as string, givenname as string, pets as (givenname as string)[])[],",
+				"          creattiondate as integer,",
+				"          id as string,",
+				"          isRegistered as boolean,",
+				"          parents as (familyname as string, givenname as string)[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> Jsonsource",
+				"Jsonsource foldDown(unrollMultiple(parents,children,children.pets),",
+				"     mapColumn(",
+				"          parents_givename = parents.givenname,",
+				"          parents_familyname = parents.familyname,",
+				"          children_givenname = children.givenname,",
+				"          children_familname = children.familyname,",
+				"          children_age = children.age,",
+				"          childrenpetsname = children.pets.givenname,",
+				"          country = address.country,",
+				"          state = address.state",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenjson",
+				"flattenjson sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['family.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> jsonsink"
+			]
+		}
+	}
+}

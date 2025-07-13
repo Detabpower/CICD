@@ -1,0 +1,72 @@
+{
+	"name": "CSVtoJsondataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "CSVToJsonDS",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {SOid,SODate,Country,Item,Qty,Value} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 derive(SODate = split({SOid,SODate,Country,Item,Qty,Value}, ',')[2],",
+				"          Country = split({SOid,SODate,Country,Item,Qty,Value}, ',')[3],",
+				"          Sales = @(Item=split({SOid,SODate,Country,Item,Qty,Value}, ',')[4],",
+				"          Qty=split({SOid,SODate,Country,Item,Qty,Value}, ',')[5],",
+				"          Value=split({SOid,SODate,Country,Item,Qty,Value}, ',')[6]),",
+				"          SOId = split({SOid,SODate,Country,Item,Qty,Value}, ',')[1]) ~> derivedColumn1",
+				"select1 aggregate(groupBy(SOId,",
+				"          SODate,",
+				"          Country),",
+				"     Sales = collect(Sales)) ~> aggregate1",
+				"derivedColumn1 select(mapColumn(",
+				"          SODate,",
+				"          Country,",
+				"          Sales,",
+				"          SOId",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['Sales.json'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1"
+			]
+		}
+	}
+}

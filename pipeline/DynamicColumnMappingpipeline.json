@@ -1,0 +1,156 @@
+{
+	"name": "DynamicColumnMappingpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Source data Dynamically",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "insertiondate",
+								"value": {
+									"value": "@formatDateTime(utcNow(), 'dd-MMM-yyyy')",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "insertiontime",
+								"value": {
+									"value": "@formatDateTime(utcNow(), 'HH:mm:ss')",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@pipeline().parameters.p_Ordermap",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "sourcedatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": "data",
+							"p_container": "source",
+							"p_filename": "Orders.csv"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "destinationdatafolderds",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_container": "destination",
+							"p_directory": "data",
+							"p_filename": "Orders.csv"
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"p_Ordermap": {
+				"type": "object",
+				"defaultValue": {
+					"type": "TabularTranslator",
+					"mappings": [
+						{
+							"source": {
+								"name": "orderid",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "orderid",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "FirstName",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "FirstName",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "LastName",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "LastName",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "Inserttime",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "Inserttime",
+								"type": "String",
+								"physicalType": "String"
+							}
+						}
+					],
+					"typeConversion": true,
+					"typeConversionSettings": {
+						"allowDataTruncation": true,
+						"treatBooleanAsNumber": false
+					}
+				}
+			}
+		},
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-29T11:12:12Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

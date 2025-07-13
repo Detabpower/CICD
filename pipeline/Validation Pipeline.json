@@ -1,0 +1,104 @@
+{
+	"name": "Validation Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Bronze Dataset Validation",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DelimitedText1",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_subfolder": {
+								"value": "@pipeline().parameters.foldername",
+								"type": "Expression"
+							},
+							"p_filename": {
+								"value": "@pipeline().parameters.filename",
+								"type": "Expression"
+							}
+						}
+					},
+					"timeout": "0.12:00:00",
+					"sleep": 10
+				}
+			},
+			{
+				"name": "Success variable",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Bronze Dataset Validation",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "success",
+					"value": {
+						"value": "@activity('Bronze Dataset Validation').output.value",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Failure variable",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Bronze Dataset Validation",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "pipelineReturnValue",
+					"value": [
+						{
+							"key": "message",
+							"value": {
+								"type": "String",
+								"content": ""
+							}
+						}
+					],
+					"setSystemVariable": true
+				}
+			}
+		],
+		"parameters": {
+			"foldername": {
+				"type": "string"
+			},
+			"filename": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"success": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Interview Questions"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-07-12T15:40:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

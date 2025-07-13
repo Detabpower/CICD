@@ -1,0 +1,235 @@
+{
+	"name": "ParameterizedDynamicMappingpipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "GetSourceDataMetadata",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "MetadataDS",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_container": "source",
+							"p_directory": "data"
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachSourcefile",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GetSourceDataMetadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetSourceDataMetadata').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copysourcedata",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"value": "@if(contains(item().name, 'dept'),pipeline().parameters.p_deptmap,pipeline().parameters.p_empmap)",
+									"type": "Expression"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "sourcedatafolderds",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_folder": "data",
+										"p_container": "source",
+										"p_filename": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "destinationdatafolderds",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_container": "destination",
+										"p_directory": "data",
+										"p_filename": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_deptmap": {
+				"type": "object",
+				"defaultValue": {
+					"type": "TabularTranslator",
+					"mappings": [
+						{
+							"source": {
+								"name": "DeptID",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "DeptID",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "DeptName",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "DeptName",
+								"type": "String",
+								"physicalType": "String"
+							}
+						}
+					],
+					"typeConversion": true,
+					"typeConversionSettings": {
+						"allowDataTruncation": true,
+						"treatBooleanAsNumber": false
+					}
+				}
+			},
+			"p_empmap": {
+				"type": "object",
+				"defaultValue": {
+					"type": "TabularTranslator",
+					"mappings": [
+						{
+							"source": {
+								"name": "EmpId",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "EmpId",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "EmpName",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "EmpName",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "EmpAdd",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "EmpAdd",
+								"type": "String",
+								"physicalType": "String"
+							}
+						},
+						{
+							"source": {
+								"name": "DeptName",
+								"type": "String",
+								"physicalType": "String"
+							},
+							"sink": {
+								"name": "DeptName",
+								"type": "String",
+								"physicalType": "String"
+							}
+						}
+					],
+					"typeConversion": true,
+					"typeConversionSettings": {
+						"allowDataTruncation": true,
+						"treatBooleanAsNumber": false
+					}
+				}
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-05-27T19:25:04Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
